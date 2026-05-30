@@ -1,16 +1,21 @@
+import pygame
+GRAVITY = 0.5
+
 class PhysicsObjects(pygame.sprite.Sprite):
-    def __init__(self, img, x, y, speed):
-        super().__init__()
-
-
-class Player(pygame.sprite.Sprite):
     def __init__(self, type_img, x, y, scale, speed, health):
-        pygame.sprite.Sprite.__init__(self)
+        super().__init__()
         self.alive = True
         self.type_img = type_img
         self.speed = speed
+        self.health = health
+        self.max_health = self.health
+        self.direction = 1
+        self.vel_y = 0
+        self.jump = False
+        self.in_air = True
         self.frame_index = 0
         self.action = 0
+        self.update_time = pygame.time.get_ticks()
 
         animation_types = ['Idle', 'Run', 'Jump', 'Death']
         for animation in animation_types:
@@ -31,12 +36,52 @@ class Player(pygame.sprite.Sprite):
         self.height = self.image.get_height()
 
 
-    def update():
+    def update(self):
         self.update_animation()
         self.chec_alive()
 
-    def move():
-        pass
+    def move(self, moving_left, moving_right):
+        dx = 0
+        dy = 0
+
+        if moving_left:
+            dx = -self.speed
+            self.direction = -1
+        if moving_right:
+            dx = self.speed
+            self.direction = 1
+
+        # Jump
+        if self.jump == True and self.in_air == False:
+            self.vel_y = -15
+            self.jump = False
+            self.in_air = True
+
+        # графитация 
+        self.vel_y += GRAVITY
+        if self.vel_y > 10:
+            self.vel_y
+        dy += self.vel_y
+
+        # проверить столкновения
+        for tile in world.obstacle_list:
+            # проверка на столкновение по оси x
+            if tile[1].colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
+                dx = 0
+            if tile[1].colliderect(self.rect.x, self.rect.y + dy + 2, self.width, self.height):
+                # проверить нахожусь ли я ниже земли, тоесть прыгаю
+                if self.vel_y < 0:
+                    self.vel_y = 0
+                    dy = tile[1].bottom - self.rect.top
+                # проверить не нахожусь ли я над зеьлёй, тоесть не падаю
+                elif self.vel_y >= 0:
+                    self.vel_y = 0
+                    self.in_air = False
+                    dy = tile[1].top - self.rect.bottom
+
+        self.rect.x += dx
+        self.rect.y += dy
+
 
     def update_animation(self):
         # обновляет анимацию
@@ -76,3 +121,39 @@ class Player(pygame.sprite.Sprite):
                 self.speed -= 0.1
             self.alive = False
             self.update_action(3)
+
+
+class Player(pygame.sprite.Sprite):
+    def __init__(self, type_img, x, y, scale, speed, health):
+        pygame.sprite.Sprite.__init__(self)
+        
+
+
+class Button():
+    def __init__(self, x, y, image, scale):
+        width = image.get_width()
+        height = image.get_height()
+        self.image = pygame.transform.scale(image, (int(width * scale), int(height * scale)))
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (x, y)
+        self.clicked = False
+
+    def draw(self, surface):
+        action = False
+
+        # get mouse position
+        pos = pygame.mouse.get_pos()
+
+        # check mouseover and clicked conditions
+        if self.rect.collidepoint(pos):
+            if pygame.mouse.get_pressed()[0] == 1 and self.clicked == False:
+                action = True
+                self.clicked = True
+
+        if pygame.mouse.get_pressed()[0] == 0:
+            self.clicked = False
+
+        # draw button
+        surface.blit(self.image, (self.rect.x, self.rect.y))
+
+        return action
