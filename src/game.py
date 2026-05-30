@@ -1,4 +1,5 @@
 import pygame
+from main import *
 GRAVITY = 0.5
 
 class PhysicsObjects(pygame.sprite.Sprite):
@@ -157,3 +158,27 @@ class Button():
         surface.blit(self.image, (self.rect.x, self.rect.y))
 
         return action
+
+
+class World():
+    def __init__(self):
+        self.obstacle_list = []
+
+    def process_data(self, data, img_list, TILE_SIZE):
+        self.level_length = len(data[0])
+        # пройти по каждому значению по файлу данный уровня
+        for y, row in enumerate(data):
+            for x, tile in enumerate(row):
+                if tile >= 0:
+                    img = img_list[tile]
+                    img_rect = img.get_rect()
+                    img_rect.x = x * TILE_SIZE
+                    img_rect.y = y * TILE_SIZE
+                    tile_data = (img, img_rect)
+                    if tile >= 0 and tile <= 8:
+                        self.obstacle_list.append(tile_data)
+
+    def draw(self): # вроде здесть нужно чтобы карта не сразу рендералась
+        for tile in self.obstacle_list:
+            # tile[1][0] += screen_scroll
+            screen.blit(tile[0], tile[1])

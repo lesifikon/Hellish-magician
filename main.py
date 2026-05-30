@@ -1,7 +1,9 @@
 import pygame
 import sys
+import csv
 
 from assets.imeges.img import player
+from src.game import *
 
 pygame.init()
 
@@ -58,18 +60,46 @@ def main_menu ():
 
 
 def game():
+    ROWS = 50
+    MAX_COLS = 150
+    TILE_SIZE = HEIGHT // 16
+    TILE_TYPES = 24
+    MAX_LEVELS = 9
+    level = 1
+    circle = 1
+
+    img_list = []
+    for x in range(TILE_TYPES):
+        img = pygame.image.load(f'Level Editor 1/tile/{x}.png')
+        img = pygame.transform.scale(img, (TILE_SIZE, TILE_SIZE))
+        img_list.append(img)
+
 
     player_image = player.convert_alpha()
 
     player_rect = player_image.get_rect(topleft=(500, 300))
 
+    world_data = []
+    for row in range(ROWS):
+        r = [-1] * MAX_COLS
+        world_data.append(r)
+    with open(f'assets/map/circle{circle}/level{level}_data.csv', newline='') as csvfile:
+        render = csv.reader(csvfile, delimiter=',')
+        for x, row in enumerate(render):
+            for y, tile in enumerate(row):
+                world_data[x][y] = int(tile)
+
     while True:
         screen.fill((0, 0, 0))
+
+        world = World()
+        world.process_data(world_data, img_list, TILE_SIZE)
+        world.draw()
 
         text('game', font, (255, 255, 255), screen, 20, 20)
 
         screen.blit(player_image, player_rect)
-
+        world.process_data(world_data, img_list, TILE_SIZE)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()

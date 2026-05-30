@@ -131,23 +131,23 @@ while run:
     draw_text('w,a,s,d -- передвигать камирой\nh,l -- круги ада\nj,k -- перемещение по уровню', font, WHITE, 10,
               SCREEN_HEIGHT + LOWER_MARGIN - 60)
 
-    # # сохранить и загрузить данные
-    # if save_button.draw(screen):
-    #     # нужно сохранить данные уроня
-    #     with open(f'Level map/level{level}_data.csv', 'w', newline='') as csvfile:
-    #         writer = csv.writer(csvfile, delimiter=',')
-    #         for row in world_data:
-    #             writer.writerow(row)
-    # if load_button.draw(screen):
-    #     # загрузить данные уроня
-    #     # вернуть прокрутку к началу уровня
-    #     scroll_x = 0
-    #     scroll_y = 0
-    #     with open(f'Level map/level{level}_data.csv', newline='') as csvfile:
-    #         reader = csv.reader(csvfile, delimiter=',')
-    #         for x, row in enumerate(reader):
-    #             for y, tile in enumerate(row):
-    #                 world_data[x][y] = int(tile)
+    # сохранить и загрузить данные
+    if save_button.draw(screen):
+        # нужно сохранить данные уроня
+        with open(f'assets/map/circle{circle}/level{level}_data.csv', 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile, delimiter=',')
+            for row in world_data:
+                writer.writerow(row)
+    if load_button.draw(screen):
+        # загрузить данные уроня
+        # вернуть прокрутку к началу уровня
+        scroll_x = 0
+        scroll_y = 0
+        with open(f'assets/map/circle{circle}/level{level}_data.csv', newline='') as csvfile:
+            reader = csv.reader(csvfile, delimiter=',')
+            for x, row in enumerate(reader):
+                for y, tile in enumerate(row):
+                    world_data[x][y] = int(tile)
 
     # нарисовать панель с плитками
     pygame.draw.rect(screen, GREEN, (SCREEN_WIDTH, 0, SIDE_MARGIN, SCREEN_HEIGHT + 1))
