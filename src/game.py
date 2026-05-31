@@ -1,10 +1,11 @@
 import pygame
+import os
 from main import *
 GRAVITY = 0.5
 
 class PhysicsObjects(pygame.sprite.Sprite):
     def __init__(self, type_img, x, y, scale, speed, health):
-        super().__init__()
+        # super().__init__()
         self.alive = True
         self.type_img = type_img
         self.speed = speed
@@ -12,8 +13,10 @@ class PhysicsObjects(pygame.sprite.Sprite):
         self.max_health = self.health
         self.direction = 1
         self.vel_y = 0
+        self.flip = False
         self.jump = False
         self.in_air = True
+        self.animation_list = []
         self.frame_index = 0
         self.action = 0
         self.update_time = pygame.time.get_ticks()
@@ -23,9 +26,9 @@ class PhysicsObjects(pygame.sprite.Sprite):
             # сбросите временный список изображений
             temp_list = []
             # количество файлов в папке
-            mum_of_frames = len(os.listdir(f'images/{self.type_img}/{animation}'))
+            mum_of_frames = len(os.listdir(f'./assets/images/{self.type_img}/{animation}'))
             for i in range(mum_of_frames):
-                img = pygame.image.load(f'images/{self.type_img}/{animation}/{i}.png').convert_alpha()
+                img = pygame.image.load(f'./assets/images/{self.type_img}/{animation}/{i}.png').convert_alpha()
                 img = pygame.transform.scale(img, (img.get_width() * scale, img.get_height() * scale))
                 temp_list.append(img)
             self.animation_list.append(temp_list)
@@ -41,12 +44,13 @@ class PhysicsObjects(pygame.sprite.Sprite):
         self.update_animation()
         self.chec_alive()
 
-    def move(self, moving_left, moving_right):
+    def move(self,world, moving_left, moving_right):
+        self.world = world
         dx = 0
         dy = 0
 
         if moving_left:
-            dx = -self.speed
+            dx = -self.spee 
             self.direction = -1
         if moving_right:
             dx = self.speed
@@ -65,7 +69,7 @@ class PhysicsObjects(pygame.sprite.Sprite):
         dy += self.vel_y
 
         # проверить столкновения
-        for tile in world.obstacle_list:
+        for tile in self.world.obstacle_list:
             # проверка на столкновение по оси x
             if tile[1].colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
                 dx = 0
@@ -122,12 +126,16 @@ class PhysicsObjects(pygame.sprite.Sprite):
                 self.speed -= 0.1
             self.alive = False
             self.update_action(3)
+    def draw(self):
+            screen.blit(pygame.transform.flip(self.image, self.flip, False), self.rect)
 
-
-class Player(pygame.sprite.Sprite):
+class Player(PhysicsObjects):
     def __init__(self, type_img, x, y, scale, speed, health):
-        pygame.sprite.Sprite.__init__(self)
-        
+        super().__init__(type_img, x, y, scale, speed, health)
+
+
+
+
 
 
 class Button():
@@ -177,6 +185,10 @@ class World():
                     tile_data = (img, img_rect)
                     if tile >= 0 and tile <= 8:
                         self.obstacle_list.append(tile_data)
+                    if tile == 15:
+                        peoples = Player('player', x * TILE_SIZE, y * TILE_SIZE, 3, 5, 100)
+
+        return peoples
 
     def draw(self): # вроде здесть нужно чтобы карта не сразу рендералась
         for tile in self.obstacle_list:

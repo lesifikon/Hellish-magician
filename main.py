@@ -2,7 +2,7 @@ import pygame
 import sys
 import csv
 
-from assets.imeges.img import player
+from assets.images.img import player
 from src.game import *
 
 pygame.init()
@@ -12,7 +12,7 @@ WIDTH, HEIGHT = info.current_w, info.current_h
 screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.HWSURFACE | pygame.DOUBLEBUF | pygame.SCALED)
 
 pygame.display.set_caption('маг в аду')
-pygame.display.set_icon(pygame.image.load('./assets/imeges/icon.png'))
+pygame.display.set_icon(pygame.image.load('./assets/images/icon.png'))
 
 clock = pygame.time.Clock()
 MAX_FPS = 60
@@ -89,14 +89,20 @@ def game():
             for y, tile in enumerate(row):
                 world_data[x][y] = int(tile)
 
+    world = World()
+    peoples = world.process_data(world_data, img_list, TILE_SIZE)
+
+
     while True:
         screen.fill((0, 0, 0))
 
-        world = World()
-        world.process_data(world_data, img_list, TILE_SIZE)
         world.draw()
 
         text('game', font, (255, 255, 255), screen, 20, 20)
+
+        peoples.move(world,moving_left = False, moving_right = True)
+        peoples.update()
+        peoples.draw()
 
         screen.blit(player_image, player_rect)
         world.process_data(world_data, img_list, TILE_SIZE)
