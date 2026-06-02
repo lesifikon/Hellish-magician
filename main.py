@@ -39,7 +39,8 @@ def main_menu ():
         buttonOptions = pygame.Rect(50, 200, 200, 50)
         if buttonPlay.collidepoint((mx, my)):
             if click:
-                game()
+                # game()
+                test()
         if buttonOptions.collidepoint((mx, my)):
             if click:
                 options()
@@ -130,6 +131,55 @@ def options():
         pygame.display.flip()
         clock.tick(MAX_FPS)
 
+def test():
+    x = 400
+    y = 300
+
+    scroll_x = 0
+    scroll_y = 0
+
+
+    while True:
+        a = 680 + scroll_x
+        b = 680 + scroll_y
+
+
+        screen.fill((255, 255, 255))
+
+        wid = x + 16
+        hei = y + 16
+
+        pygame.draw.rect(screen, (0, 255, 0), (wid, hei, 32, 32))
+
+
+        if wid > 1000:
+            scroll_x += round((wid - 1000) / 10)
+        if wid < 200:
+            scroll_x -= round((200 - wid) / 10)
+        if hei > 1000:
+            scroll_y += round((hei - 1000) / 10)
+        if hei < 200:
+            scroll_y -= round((200 - hei) / 10)
+
+        pygame.draw.rect(screen, (255, 0, 0), (a, b, 32, 32))
+
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_a]:
+            x -= 3
+        if keys[pygame.K_d]:
+            x += 3
+        if keys[pygame.K_w]:
+            y -= 3 
+        if keys[pygame.K_s]:
+            y += 3
+        pygame.display.flip()
+        clock.tick(MAX_FPS)
 
 
 if __name__ == "__main__":

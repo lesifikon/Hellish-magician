@@ -194,3 +194,4 @@ class World():
         for tile in self.obstacle_list:
             # tile[1][0] += screen_scroll
             screen.blit(tile[0], tile[1])
+
