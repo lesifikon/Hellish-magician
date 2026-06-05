@@ -39,8 +39,8 @@ def main_menu ():
         buttonOptions = pygame.Rect(50, 200, 200, 50)
         if buttonPlay.collidepoint((mx, my)):
             if click:
-                # game()
-                test()
+                game()
+                # test()
         if buttonOptions.collidepoint((mx, my)):
             if click:
                 options()
@@ -68,6 +68,8 @@ def game():
     MAX_LEVELS = 9
     level = 1
     circle = 1
+    moving_left = False
+    moving_right = False
 
     img_list = []
     for x in range(TILE_TYPES):
@@ -75,10 +77,6 @@ def game():
         img = pygame.transform.scale(img, (TILE_SIZE, TILE_SIZE))
         img_list.append(img)
 
-
-    player_image = player.convert_alpha()
-
-    player_rect = player_image.get_rect(topleft=(500, 300))
 
     world_data = []
     for row in range(ROWS):
@@ -94,27 +92,45 @@ def game():
     peoples = world.process_data(world_data, img_list, TILE_SIZE)
 
 
-    while True:
-        screen.fill((0, 0, 0))
+    scroll_x = 0
+    scroll_y = 0
 
-        world.draw()
+    while True:
+
+        screen.fill((200, 25, 25))
+
+        world.draw(scroll_x, scroll_y)
 
         text('game', font, (255, 255, 255), screen, 20, 20)
 
-        peoples.move(world,moving_left = False, moving_right = True)
+        peoples.move(world, moving_left, moving_right)
+        scroll_x, scroll_y = peoples.scroll()
         peoples.update()
         peoples.draw()
 
-        screen.blit(player_image, player_rect)
-        world.process_data(world_data, img_list, TILE_SIZE)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-    
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_a:
+                    moving_left = True
+                if event.key == pygame.K_d:
+                    moving_right = True
+                if event.key == pygame.K_SPACE:
+                    peoples.jump = True
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_a:
+                    moving_left = False
+                if event.key == pygame.K_d:
+                    moving_right = False
+                if event.key == pygame.K_SPACE:
+                    peoples.jump = False
 
         pygame.display.flip()
         clock.tick(MAX_FPS)
+
 
 def options():
     while True:
@@ -126,10 +142,10 @@ def options():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-    
 
         pygame.display.flip()
         clock.tick(MAX_FPS)
+
 
 def test():
     x = 400

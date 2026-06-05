@@ -17,8 +17,8 @@ screen = pygame.display.set_mode((SCREEN_WIDTH + SIDE_MARGIN, SCREEN_HEIGHT + LO
 pygame.display.set_caption('Level Editor')
 
 # задать параметры игры
-ROWS = 50
-MAX_COLS = 150
+ROWS = 25
+MAX_COLS = 70
 TILE_SIZE = SCREEN_HEIGHT // 16
 TILE_TYPES = 24
 level = 0

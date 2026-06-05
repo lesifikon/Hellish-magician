@@ -39,6 +39,8 @@ class PhysicsObjects(pygame.sprite.Sprite):
         self.width = self.image.get_width()
         self.height = self.image.get_height()
 
+        self.legs = pygame.Rect(0, 0, 5, 5)
+
 
     def update(self):
         self.update_animation()
@@ -50,7 +52,7 @@ class PhysicsObjects(pygame.sprite.Sprite):
         dy = 0
 
         if moving_left:
-            dx = -self.spee 
+            dx = -self.speed
             self.direction = -1
         if moving_right:
             dx = self.speed
@@ -67,6 +69,14 @@ class PhysicsObjects(pygame.sprite.Sprite):
         if self.vel_y > 10:
             self.vel_y
         dy += self.vel_y
+
+        # не падает ли существо
+        self.legs.center = (self.rect.centerx, (self.rect.centery + self.height))
+        floor = [tile[1] for tile in self.world.obstacle_list]
+        # pygame.draw.rect(screen, (255, 0, 255), self.legs)
+        if self.legs.collidelist(floor) == -1:
+            self.jump == False
+            self.in_air = True
 
         # проверить столкновения
         for tile in self.world.obstacle_list:
@@ -133,9 +143,27 @@ class Player(PhysicsObjects):
     def __init__(self, type_img, x, y, scale, speed, health):
         super().__init__(type_img, x, y, scale, speed, health)
 
+    def scroll(self):
 
+        scroll_x = 0
+        scroll_y = 0
 
+        playerCenter_x = self.rect.x + (self.width / 2)
+        playerCenter_y = self.rect.y + (self.height / 2)
 
+        if playerCenter_x > 1220:
+            scroll_x -= round((playerCenter_x - 1220) / 15)
+        if playerCenter_x < 500:
+            scroll_x += round((500 - playerCenter_x) / 15)
+        if playerCenter_y > 780:
+            scroll_y += round((780 - playerCenter_y) / 10)
+        if playerCenter_y < 300:
+            scroll_y += round((300 - playerCenter_y) / 10)
+
+        self.rect.x += scroll_x
+        self.rect.y += scroll_y
+
+        return scroll_x, scroll_y
 
 
 class Button():
@@ -190,8 +218,9 @@ class World():
 
         return peoples
 
-    def draw(self): # вроде здесть нужно чтобы карта не сразу рендералась
+    def draw(self, scroll_x, scroll_y):
         for tile in self.obstacle_list:
-            # tile[1][0] += screen_scroll
+            tile[1][0] += scroll_x
+            tile[1][1] += scroll_y
             screen.blit(tile[0], tile[1])
 
