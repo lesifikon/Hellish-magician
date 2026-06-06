@@ -89,7 +89,7 @@ def game():
                 world_data[x][y] = int(tile)
 
     world = World()
-    peoples = world.process_data(world_data, img_list, TILE_SIZE)
+    peoples, shadow = world.process_data(world_data, img_list, TILE_SIZE)
 
 
     scroll_x = 0
@@ -107,6 +107,13 @@ def game():
         scroll_x, scroll_y = peoples.scroll()
         peoples.update()
         peoples.draw()
+        hand = peoples.ray_light()
+        shadow.update()
+        shadow.draw()
+
+        print(shadow.alive)
+        if shadow.rect.colliderect(hand):
+            shadow.alive = False
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:

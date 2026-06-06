@@ -1,5 +1,6 @@
 import pygame
 import os
+import math
 from main import *
 GRAVITY = 0.5
 
@@ -142,6 +143,7 @@ class PhysicsObjects(pygame.sprite.Sprite):
 class Player(PhysicsObjects):
     def __init__(self, type_img, x, y, scale, speed, health):
         super().__init__(type_img, x, y, scale, speed, health)
+        self.hand = pygame.Rect(0, 0, 40, 6)
 
     def scroll(self):
 
@@ -164,6 +166,31 @@ class Player(PhysicsObjects):
         self.rect.y += scroll_y
 
         return scroll_x, scroll_y
+
+    def ray_light(self):
+        self.hand.center = (self.rect.centerx + 20, self.rect.centery)
+        draw = self.draw()
+        pygame.draw.rect(screen, (25, 100, 25), self.hand)
+
+        hand = pygame.image.load('/home/lesifikon/job/Hellish-magician/assets/images/player/hand2.png').convert_alpha()
+        hand_rect = hand.get_rect(topleft=(self.rect.x + (self.width / 2), self.rect.y))
+
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        rel_x, rel_y = mouse_x - (self.rect.x + (self.width / 2)), mouse_y - self.rect.y
+        angle = (180 / math.pi) * -math.atan2(rel_y, rel_x)
+        h_hand = pygame.transform.rotate(hand, int(angle))
+        rect = h_hand.get_rect(center=hand_rect.center)
+        screen.blit(h_hand, rect)
+
+        return rect
+
+    def draw(self):
+            screen.blit(pygame.transform.flip(self.image, self.flip, False), self.rect)
+
+
+class Shadow(PhysicsObjects):
+    def __init__(self, type_img, x, y, scale, speed, health):
+        super().__init__(type_img, x, y, scale, speed, health)
 
 
 class Button():
@@ -215,8 +242,10 @@ class World():
                         self.obstacle_list.append(tile_data)
                     if tile == 15:
                         peoples = Player('player', x * TILE_SIZE, y * TILE_SIZE, 3, 5, 100)
+                    if tile == 16:
+                        shadow = Shadow('shadow', x * TILE_SIZE, y * TILE_SIZE, 3, 2, 1)
 
-        return peoples
+        return peoples, shadow
 
     def draw(self, scroll_x, scroll_y):
         for tile in self.obstacle_list:
