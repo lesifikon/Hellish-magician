@@ -1,7 +1,9 @@
 import pygame
 import os
 import math
+import random
 from main import *
+from assets.images.img import *
 GRAVITY = 0.5
 
 class PhysicsObjects(pygame.sprite.Sprite):
@@ -98,6 +100,9 @@ class PhysicsObjects(pygame.sprite.Sprite):
         self.rect.x += dx
         self.rect.y += dy
 
+    def update_world(self, world):
+        data = self.world.obstacle_list
+        return data
 
     def update_animation(self):
         # обновляет анимацию
@@ -137,13 +142,14 @@ class PhysicsObjects(pygame.sprite.Sprite):
                 self.speed -= 0.1
             self.alive = False
             self.update_action(3)
+
     def draw(self):
             screen.blit(pygame.transform.flip(self.image, self.flip, False), self.rect)
 
 class Player(PhysicsObjects):
     def __init__(self, type_img, x, y, scale, speed, health):
         super().__init__(type_img, x, y, scale, speed, health)
-        self.hand = pygame.Rect(0, 0, 40, 6)
+        self.hand_img = mini_hamd_player_img.convert_alpha()
 
     def scroll(self):
 
@@ -167,22 +173,19 @@ class Player(PhysicsObjects):
 
         return scroll_x, scroll_y
 
-    def ray_light(self):
-        self.hand.center = (self.rect.centerx + 20, self.rect.centery)
-        draw = self.draw()
-        pygame.draw.rect(screen, (25, 100, 25), self.hand)
-
-        hand = pygame.image.load('/home/lesifikon/job/Hellish-magician/assets/images/player/hand2.png').convert_alpha()
-        hand_rect = hand.get_rect(topleft=(self.rect.x + (self.width / 2), self.rect.y))
-
+    def hand(self):
         mouse_x, mouse_y = pygame.mouse.get_pos()
         rel_x, rel_y = mouse_x - (self.rect.x + (self.width / 2)), mouse_y - self.rect.y
         angle = (180 / math.pi) * -math.atan2(rel_y, rel_x)
-        h_hand = pygame.transform.rotate(hand, int(angle))
-        rect = h_hand.get_rect(center=hand_rect.center)
+        h_hand = pygame.transform.rotate(self.hand_img, int(angle))
+        rect = h_hand.get_rect(center=(self.rect.x + (self.width / 2), self.rect.y))
         screen.blit(h_hand, rect)
 
-        return rect
+    def ray_light(self):
+        pass
+
+    def dash(self):
+        pass
 
     def draw(self):
             screen.blit(pygame.transform.flip(self.image, self.flip, False), self.rect)
@@ -191,6 +194,15 @@ class Player(PhysicsObjects):
 class Shadow(PhysicsObjects):
     def __init__(self, type_img, x, y, scale, speed, health):
         super().__init__(type_img, x, y, scale, speed, health)
+
+    def intelligence(self, world):
+        n = random.randint(1,10)
+        if n <= 5:
+            self.move(world, moving_left = False, moving_right = True)
+        else:
+            self.move(world, moving_left = True, moving_right = False)
+
+        
 
 
 class Button():

@@ -70,6 +70,8 @@ def game():
     circle = 1
     moving_left = False
     moving_right = False
+    hand_use = False
+    dash = False
 
     img_list = []
     for x in range(TILE_TYPES):
@@ -107,13 +109,13 @@ def game():
         scroll_x, scroll_y = peoples.scroll()
         peoples.update()
         peoples.draw()
-        # hand = peoples.ray_light()
         shadow.update()
         shadow.draw()
+        shadow.intelligence(world)
 
-        # print(shadow.alive)
-        # if shadow.rect.colliderect(hand):
-        #     shadow.alive = False
+
+        if hand_use:
+            peoples.hand()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -127,6 +129,11 @@ def game():
                     moving_right = True
                 if event.key == pygame.K_SPACE:
                     peoples.jump = True
+                if event.key == pygame.K_1:
+                    if hand_use:
+                        hand_use = False
+                    else:
+                        hand_use = True
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_a:
                     moving_left = False
