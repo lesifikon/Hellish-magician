@@ -7,8 +7,9 @@ from assets.images.img import *
 GRAVITY = 0.5
 
 class PhysicsObjects(pygame.sprite.Sprite):
-    def __init__(self, type_img, x, y, scale, speed, health):
+    def __init__(self, type_img, x, y, scale, speed, health, obstacle_list):
         # super().__init__()
+        self.obstacle_list = obstacle_list
         self.alive = True
         self.type_img = type_img
         self.speed = speed
@@ -23,6 +24,9 @@ class PhysicsObjects(pygame.sprite.Sprite):
         self.frame_index = 0
         self.action = 0
         self.update_time = pygame.time.get_ticks()
+
+        # self.scroll_x = 0
+        # self.scroll_y = 0
 
         animation_types = ['Idle', 'Run', 'Jump', 'Death']
         for animation in animation_types:
@@ -49,8 +53,7 @@ class PhysicsObjects(pygame.sprite.Sprite):
         self.update_animation()
         self.chec_alive()
 
-    def move(self,world, moving_left, moving_right):
-        self.world = world
+    def move(self, moving_left, moving_right):
         dx = 0
         dy = 0
 
@@ -75,14 +78,14 @@ class PhysicsObjects(pygame.sprite.Sprite):
 
         # не падает ли существо
         self.legs.center = (self.rect.centerx, (self.rect.centery + self.height))
-        floor = [tile[1] for tile in self.world.obstacle_list]
+        floor = [tile[1] for tile in self.obstacle_list]
         # pygame.draw.rect(screen, (255, 0, 255), self.legs)
         if self.legs.collidelist(floor) == -1:
             self.jump == False
             self.in_air = True
 
         # проверить столкновения
-        for tile in self.world.obstacle_list:
+        for tile in self.obstacle_list:
             # проверка на столкновение по оси x
             if tile[1].colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
                 dx = 0
@@ -100,9 +103,6 @@ class PhysicsObjects(pygame.sprite.Sprite):
         self.rect.x += dx
         self.rect.y += dy
 
-    def update_world(self, world):
-        data = self.world.obstacle_list
-        return data
 
     def update_animation(self):
         # обновляет анимацию
@@ -147,9 +147,18 @@ class PhysicsObjects(pygame.sprite.Sprite):
             screen.blit(pygame.transform.flip(self.image, self.flip, False), self.rect)
 
 class Player(PhysicsObjects):
-    def __init__(self, type_img, x, y, scale, speed, health):
-        super().__init__(type_img, x, y, scale, speed, health)
+    def __init__(self, type_img, x, y, scale, speed, health, obstacle_list):
+        super().__init__(type_img, x, y, scale, speed, health, obstacle_list)
+        self.mouse_x, self.mouse_y = 0, 0
+        self.rel_x, self.rel_y = 0, 0
+        self.handx, self.handy = self.rect.x + (self.width / 2), self.rect.y
         self.hand_img = mini_hamd_player_img.convert_alpha()
+        self.lightning_img = mini_lightning.convert_alpha()
+        self.purple_square = pygame.Surface((8, 8),pygame.SRCALPHA)
+        self.purple_square.fill((128, 0, 128))
+        self.purple_square_rect = pygame.Rect(0, 0, 8, 8)
+        self.end_of_lightning = pygame.Rect(0, 0, 8, 8)
+        self.hand_rect = False
 
     def scroll(self):
 
@@ -174,16 +183,58 @@ class Player(PhysicsObjects):
         return scroll_x, scroll_y
 
     def hand(self):
-        mouse_x, mouse_y = pygame.mouse.get_pos()
-        rel_x, rel_y = mouse_x - (self.rect.x + (self.width / 2)), mouse_y - self.rect.y
-        angle = (180 / math.pi) * -math.atan2(rel_y, rel_x)
+        self.mouse_x, self.mouse_y = pygame.mouse.get_pos()
+        self.rel_x, self.rel_y = self.mouse_x - self.handx, self.mouse_y - self.rect.y
+        angle = (180 / math.pi) * -math.atan2(self.rel_y, self.rel_x)
         h_hand = pygame.transform.rotate(self.hand_img, int(angle))
-        rect = h_hand.get_rect(center=(self.rect.x + (self.width / 2), self.rect.y))
-        screen.blit(h_hand, rect)
+        self.hand_rect = h_hand.get_rect(center=(self.rect.x + (self.width / 2), self.rect.y))
+        screen.blit(h_hand, self.hand_rect)
+
 
     def ray_light(self):
         pass
 
+
+    def lightning_strike(self):
+        self.handx, self.handy = self.rect.x + (self.width / 2), self.rect.y
+        legx = 0
+        legy = 0
+        hypotenuse = 0
+        n_lightning = 0
+
+        angle_rad = math.atan2(-self.rel_y, self.rel_x)
+        angle_deg = math.degrees(angle_rad)
+
+        hand_x = self.hand_rect.centerx + 8 * math.cos(angle_rad)
+        hand_y = self.hand_rect.centery - 8 * math.sin(angle_rad)
+
+        # 5. Привязываем центр маленького квадрата к концу руки
+        self.purple_square_rect.center = (int(hand_x), int(hand_y))
+        pygame.draw.rect(screen, (128, 0, 128), self.purple_square_rect)
+        self.end_of_lightning.center = (self.mouse_x, self.mouse_y)
+        pygame.draw.rect(screen, (128, 0, 128), self.end_of_lightning)
+
+        legx = abs(self.mouse_x - self.handx)
+        legy = abs(self.handy - self.mouse_y)
+
+        hypotenuse = round(((legx ** 2) + (legy ** 2)) ** 0.5)+2
+        n_lightning = round(hypotenuse / 16) + 1
+        n = 0
+        for i in range(n_lightning):
+            square = pygame.Rect(0, 0, 8, 8)
+            square_x = self.purple_square_rect.centerx + (i * 16) * math.cos(angle_rad)
+            square_y = self.purple_square_rect.centery - (i * 16) * math.sin(angle_rad)
+            square.center = (int(square_x), int(square_y))
+
+            angle = (180 / math.pi) * -math.atan2(self.rel_y, self.rel_x)
+            lightning_trans = pygame.transform.rotate(self.lightning_img, int(angle))
+            lightning_trans_rect = lightning_trans.get_rect(center=(int(square_x), int(square_y)))
+
+            screen.blit(lightning_trans, lightning_trans_rect)
+            # pygame.draw.rect(screen, (0, 255, 0), square)
+            n = n + (i * 16) + 16
+
+ 
     def dash(self):
         pass
 
@@ -192,17 +243,17 @@ class Player(PhysicsObjects):
 
 
 class Shadow(PhysicsObjects):
-    def __init__(self, type_img, x, y, scale, speed, health):
-        super().__init__(type_img, x, y, scale, speed, health)
+    def __init__(self, type_img, x, y, scale, speed, health, obstacle_list):
+        super().__init__(type_img, x, y, scale, speed, health, obstacle_list)
 
-    def intelligence(self, world):
-        n = random.randint(1,10)
+    def intelligence(self, scroll_x):
+        n = random.randint(1,50)
         if n <= 5:
-            self.move(world, moving_left = False, moving_right = True)
+            self.move(moving_left = False, moving_right = True)
         else:
-            self.move(world, moving_left = True, moving_right = False)
+            self.move(moving_left = True, moving_right = False)
 
-        
+        self.rect.x += scroll_x
 
 
 class Button():
@@ -253,9 +304,9 @@ class World():
                     if tile >= 0 and tile <= 8:
                         self.obstacle_list.append(tile_data)
                     if tile == 15:
-                        peoples = Player('player', x * TILE_SIZE, y * TILE_SIZE, 3, 5, 100)
+                        peoples = Player('player', x * TILE_SIZE, y * TILE_SIZE, 3, 5, 100, self.obstacle_list)
                     if tile == 16:
-                        shadow = Shadow('shadow', x * TILE_SIZE, y * TILE_SIZE, 3, 2, 1)
+                        shadow = Shadow('shadow', x * TILE_SIZE, y * TILE_SIZE, 3, 2, 1, self.obstacle_list)
 
         return peoples, shadow
 

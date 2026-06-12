@@ -105,13 +105,13 @@ def game():
 
         text('game', font, (255, 255, 255), screen, 20, 20)
 
-        peoples.move(world, moving_left, moving_right)
+        peoples.move(moving_left, moving_right)
         scroll_x, scroll_y = peoples.scroll()
         peoples.update()
         peoples.draw()
         shadow.update()
         shadow.draw()
-        shadow.intelligence(world)
+        shadow.intelligence(scroll_x)
 
 
         if hand_use:
@@ -141,6 +141,10 @@ def game():
                     moving_right = False
                 if event.key == pygame.K_SPACE:
                     peoples.jump = False
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    if hand_use:
+                        peoples.lightning_strike()
 
         pygame.display.flip()
         clock.tick(MAX_FPS)
@@ -162,55 +166,65 @@ def options():
 
 
 def test():
-    x = 400
-    y = 300
+    # Координаты плеча и параметры руки
+    shoulder_x, shoulder_y = 400, 300
+    arm_length = 150
+    arm_width = 20
 
-    scroll_x = 0
-    scroll_y = 0
+    # Создаем поверхность руки (вытянутый прямоугольник)
+    arm_surf = pygame.Surface((arm_length, arm_width), pygame.SRCALPHA)
+    arm_surf.fill((100, 150, 255))  # Синяя рука
 
+    # Создаем маленький квадрат на конце
+    hand_rect = pygame.Rect(0, 0, 20, 20)
 
-    while True:
-        a = 680 + scroll_x
-        b = 680 + scroll_y
-
-
-        screen.fill((255, 255, 255))
-
-        wid = x + 16
-        hei = y + 16
-
-        pygame.draw.rect(screen, (0, 255, 0), (wid, hei, 32, 32))
-
-
-        if wid > 1000:
-            scroll_x += round((wid - 1000) / 10)
-        if wid < 200:
-            scroll_x -= round((200 - wid) / 10)
-        if hei > 1000:
-            scroll_y += round((hei - 1000) / 10)
-        if hei < 200:
-            scroll_y -= round((200 - hei) / 10)
-
-        pygame.draw.rect(screen, (255, 0, 0), (a, b, 32, 32))
-
-
+    running = True
+    while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
+                running = False
 
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_a]:
-            x -= 3
-        if keys[pygame.K_d]:
-            x += 3
-        if keys[pygame.K_w]:
-            y -= 3 
-        if keys[pygame.K_s]:
-            y += 3
+        screen.fill((30, 30, 30))
+
+        # 1. Получаем позицию мыши и расстояние до нее
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        dx = mouse_x - shoulder_x
+        dy = mouse_y - shoulder_y
+
+        # 2. Находим угол в радианах (используем atan2, чтобы избежать деления на ноль)
+        # math.atan2 принимает (y, x). В компьютерной графике Y идет вниз, поэтому ставим минус
+        angle_rad = math.atan2(-dy, dx)
+        angle_deg = math.degrees(angle_rad)  # Переводим в градусы для pygame
+
+        # 3. Поворачиваем картинку руки
+        rotated_arm = pygame.transform.rotate(arm_surf, angle_deg)
+        
+        # Смещаем центр повернутой картинки, чтобы точка вращения осталась в плече
+        # Используем стандартные тригонометрические формулы смещения
+        offset_x = (arm_length / 2) * math.cos(angle_rad)
+        offset_y = -(arm_length / 2) * math.sin(angle_rad)
+        
+        arm_rect = rotated_arm.get_rect(center=(shoulder_x + offset_x, shoulder_y + offset_y))
+
+        # 4. Находим точную позицию конца руки
+        # Координата X = плечо_X + длина * cos(угол)
+        # Координата Y = плечо_Y - длина * sin(угол) (минус, так как ось Y в pygame направлена вниз)
+        hand_x = shoulder_x + arm_length * math.cos(angle_rad)
+        hand_y = shoulder_y - arm_length * math.sin(angle_rad)
+
+        # 5. Привязываем центр маленького квадрата к концу руки
+        hand_rect.center = (int(hand_x), int(hand_y))
+
+        # Отрисовка
+        screen.blit(rotated_arm, arm_rect)  # Рисуем руку
+        pygame.draw.rect(screen, (255, 100, 100), hand_rect)  # Красный квадрат на конце
+        pygame.draw.circle(screen, (255, 255, 255), (shoulder_x, shoulder_y), 5)  # Точка плеча
+
         pygame.display.flip()
-        clock.tick(MAX_FPS)
+        clock.tick(60)
 
+    pygame.quit()
+    sys.exit()
 
 if __name__ == "__main__":
     main_menu()
