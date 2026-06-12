@@ -2,6 +2,7 @@ import pygame
 import os
 import math
 import random
+import bisect
 from main import *
 from assets.images.img import *
 GRAVITY = 0.5
@@ -214,25 +215,91 @@ class Player(PhysicsObjects):
         self.end_of_lightning.center = (self.mouse_x, self.mouse_y)
         pygame.draw.rect(screen, (128, 0, 128), self.end_of_lightning)
 
-        legx = abs(self.mouse_x - self.handx)
-        legy = abs(self.handy - self.mouse_y)
+        def find_hypotenuse(x_0, x_1, y_0, y_1):
+            legx = abs(x_0 - x_1)
+            legy = abs(y_0 - y_1)
 
-        hypotenuse = round(((legx ** 2) + (legy ** 2)) ** 0.5)+2
+            hypotenuse = round(((legx ** 2) + (legy ** 2)) ** 0.5)+2
+            return hypotenuse
+
+
+        hypotenuse = find_hypotenuse(self.mouse_x, self.handx, self.mouse_y, self.handy)
         n_lightning = round(hypotenuse / 16) + 1
-        n = 0
-        for i in range(n_lightning):
+        joint = round(n_lightning / 10)
+
+        list_joint = []
+        for j in range(joint):
+            realism = random.randint(1, hypotenuse)
             square = pygame.Rect(0, 0, 8, 8)
-            square_x = self.purple_square_rect.centerx + (i * 16) * math.cos(angle_rad)
-            square_y = self.purple_square_rect.centery - (i * 16) * math.sin(angle_rad)
+            realism_x = random.randint(-50, 50)
+            realism_y = random.randint(-50, 50)
+            square_x = self.purple_square_rect.centerx + (realism - realism_x) * math.cos(angle_rad) + realism_x
+            square_y = self.purple_square_rect.centery - (realism + realism_y) * math.sin(angle_rad) + realism_y
             square.center = (int(square_x), int(square_y))
+            bisect.insort(list_joint, square.center)
+            pygame.draw.rect(screen, (0, 255, 0), square)
 
-            angle = (180 / math.pi) * -math.atan2(self.rel_y, self.rel_x)
-            lightning_trans = pygame.transform.rotate(self.lightning_img, int(angle))
-            lightning_trans_rect = lightning_trans.get_rect(center=(int(square_x), int(square_y)))
 
-            screen.blit(lightning_trans, lightning_trans_rect)
-            # pygame.draw.rect(screen, (0, 255, 0), square)
-            n = n + (i * 16) + 16
+        if self.mouse_x < self.handx:
+            list_joint.reverse()
+
+
+        if list_joint:
+            first_joint = list_joint[0]
+            rel_x, rel_y = first_joint[0] - self.purple_square_rect.centerx, first_joint[1] - self.purple_square_rect.centery
+
+            difference = find_hypotenuse(first_joint[0], self.purple_square_rect.centerx, first_joint[1], self.purple_square_rect.centery)
+            n_lightninggg = round(difference / 16) + 1
+        else:
+            rel_x, rel_y = self.mouse_x- self.purple_square_rect.centerx, self.mouse_y - self.purple_square_rect.centery
+            difference = find_hypotenuse(self.mouse_x, self.purple_square_rect.centerx, self.mouse_y, self.purple_square_rect.centery)
+            n_lightninggg = round(difference / 16) + 1
+
+
+        def draw_lightning(list, object, rel_x, rel_y):
+            angle_radd = math.atan2(-rel_y, rel_x)
+            for i in range(list):
+                square = pygame.Rect(0, 0, 6, 6)
+                square_x = object.centerx + (i * 16) * math.cos(angle_radd)
+                square_y = object.centery - (i * 16) * math.sin(angle_radd)
+                square.center = (int(square_x), int(square_y))
+                pygame.draw.rect(screen, (0, 0, 255), square)
+            return square.center
+
+        squa = pygame.Rect(0, 0, 6, 6)
+        squa.center = draw_lightning(n_lightninggg, self.purple_square_rect, rel_x, rel_y)
+
+        if list_joint:
+            print(list_joint)
+            for l in (list_joint):
+                rel_x, rel_y = l[0] - squa.centerx, l[1] - squa.centery
+                differencece = find_hypotenuse(l[0], squa.centerx, l[1], squa.centery)
+                n_lightningaa = round(differencece / 16) + 1
+                squa.center = draw_lightning(n_lightningaa, squa, rel_x, rel_y)
+
+
+
+        rel_x, rel_y = self.mouse_x - squa.centerx, self.mouse_y - squa.centery
+        differencece = find_hypotenuse(self.mouse_x, squa.centerx, self.mouse_y, squa.centery)
+        n_lightningaa = round(differencece / 16) + 1
+
+        squa.center = draw_lightning(n_lightningaa, squa, rel_x, rel_y)
+
+
+
+
+        # for i in range(n_lightning):
+        #     square = pygame.Rect(0, 0, 8, 8)
+        #     square_x = self.purple_square_rect.centerx + (i * 16) * math.cos(angle_rad)
+        #     square_y = self.purple_square_rect.centery - (i * 16) * math.sin(angle_rad)
+        #     square.center = (int(square_x), int(square_y))
+        #
+        #     angle = (180 / math.pi) * -math.atan2(self.rel_y, self.rel_x)
+        #     lightning_trans = pygame.transform.rotate(self.lightning_img, int(angle))
+        #     lightning_trans_rect = lightning_trans.get_rect(center=(int(square_x), int(square_y)))
+        #
+        #     screen.blit(lightning_trans, lightning_trans_rect)
+        #     # pygame.draw.rect(screen, (0, 255, 0), square)
 
  
     def dash(self):
