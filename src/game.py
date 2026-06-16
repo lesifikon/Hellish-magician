@@ -237,7 +237,7 @@ class Player(PhysicsObjects):
             square_y = self.purple_square_rect.centery - (realism + realism_y) * math.sin(angle_rad) + realism_y
             square.center = (int(square_x), int(square_y))
             bisect.insort(list_joint, square.center)
-            pygame.draw.rect(screen, (0, 255, 0), square)
+            # pygame.draw.rect(screen, (0, 255, 0), square)
 
 
         if self.mouse_x < self.handx:
@@ -263,6 +263,7 @@ class Player(PhysicsObjects):
                 square_x = object.centerx + (i * 16) * math.cos(angle_radd)
                 square_y = object.centery - (i * 16) * math.sin(angle_radd)
                 square.center = (int(square_x), int(square_y))
+                peint_molnia(rel_x, rel_y, self.lightning_img, square_x, square_y)
                 pygame.draw.rect(screen, (0, 0, 255), square)
             return square.center
 
@@ -270,7 +271,6 @@ class Player(PhysicsObjects):
         squa.center = draw_lightning(n_lightninggg, self.purple_square_rect, rel_x, rel_y)
 
         if list_joint:
-            print(list_joint)
             for l in (list_joint):
                 rel_x, rel_y = l[0] - squa.centerx, l[1] - squa.centery
                 differencece = find_hypotenuse(l[0], squa.centerx, l[1], squa.centery)
@@ -285,22 +285,12 @@ class Player(PhysicsObjects):
 
         squa.center = draw_lightning(n_lightningaa, squa, rel_x, rel_y)
 
-
-
-
-        # for i in range(n_lightning):
-        #     square = pygame.Rect(0, 0, 8, 8)
-        #     square_x = self.purple_square_rect.centerx + (i * 16) * math.cos(angle_rad)
-        #     square_y = self.purple_square_rect.centery - (i * 16) * math.sin(angle_rad)
-        #     square.center = (int(square_x), int(square_y))
+        # def peint_molnia(rel_x, rel_y, img, square_x, square_y):
+        #     angle = (180 / math.pi) * -math.atan2(rel_y, rel_x)
+        #     lig = pygame.transform.rotate(img, int(angle))
+        #     lig_rect = lig.get_rect(center=(int(square_x), int(square_y)))
         #
-        #     angle = (180 / math.pi) * -math.atan2(self.rel_y, self.rel_x)
-        #     lightning_trans = pygame.transform.rotate(self.lightning_img, int(angle))
-        #     lightning_trans_rect = lightning_trans.get_rect(center=(int(square_x), int(square_y)))
-        #
-        #     screen.blit(lightning_trans, lightning_trans_rect)
-        #     # pygame.draw.rect(screen, (0, 255, 0), square)
-
+        #     screen.blit(lig, lig_rect)
  
     def dash(self):
         pass
@@ -308,6 +298,12 @@ class Player(PhysicsObjects):
     def draw(self):
             screen.blit(pygame.transform.flip(self.image, self.flip, False), self.rect)
 
+def peint_molnia(rel_x, rel_y, img, square_x, square_y):
+    angle = (180 / math.pi) * -math.atan2(rel_y, rel_x)
+    lig = pygame.transform.rotate(img, int(angle))
+    lig_rect = lig.get_rect(center=(int(square_x), int(square_y)))
+
+    screen.blit(lig, lig_rect)
 
 class Shadow(PhysicsObjects):
     def __init__(self, type_img, x, y, scale, speed, health, obstacle_list):
