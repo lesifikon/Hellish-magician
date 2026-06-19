@@ -55,6 +55,9 @@ def main_menu ():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     click = True
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    game()
 
         pygame.display.flip()
         clock.tick(MAX_FPS)
@@ -70,6 +73,8 @@ def game():
     circle = 1
     moving_left = False
     moving_right = False
+    moving_up = False
+    moving_down = False
     hand_use = False
     dash = False
 
@@ -105,17 +110,26 @@ def game():
 
         text('game', font, (255, 255, 255), screen, 20, 20)
 
-        peoples.move(moving_left, moving_right)
+        if not dash:
+            peoples.move(moving_left, moving_right)
         scroll_x, scroll_y = peoples.scroll()
         peoples.update()
         peoples.draw()
+        peoples.mana_bar()
         shadow.update()
         shadow.draw()
-        shadow.intelligence(scroll_x)
+        shadow.intelligence(scroll_x, scroll_y)
 
-
-        if hand_use:
-            peoples.hand()
+        if not peoples.abilities_use:
+            dash = False
+            peoples.update_action(0)
+        if dash:
+            peoples.dash(moving_left, moving_right, moving_up, moving_down)
+        else:
+            peoples.is_dash = False
+            peoples.mana_use = False
+            if hand_use:
+                peoples.hand()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -127,6 +141,18 @@ def game():
                     moving_left = True
                 if event.key == pygame.K_d:
                     moving_right = True
+                if event.key == pygame.K_w:
+                    moving_up = True
+                if event.key == pygame.K_s:
+                    moving_down = True
+                if event.key == pygame.K_LSHIFT:
+                    if dash:
+                        dash = True
+                    else:
+                        if peoples.mana < (peoples.max_mana * 0.2):
+                            dash = False
+                        else:
+                            dash = True
                 if event.key == pygame.K_SPACE:
                     peoples.jump = True
                 if event.key == pygame.K_1:
@@ -139,12 +165,21 @@ def game():
                     moving_left = False
                 if event.key == pygame.K_d:
                     moving_right = False
+                if event.key == pygame.K_w:
+                    moving_up = False
+                if event.key == pygame.K_s:
+                    moving_down = False
+                if event.key == pygame.K_LSHIFT:
+                    dash = False
+                    peoples.update_action(0)
                 if event.key == pygame.K_SPACE:
                     peoples.jump = False
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
-                    if hand_use:
-                        peoples.lightning_strike()
+                    if hand_use and dash == False:
+                        if peoples.mana > (peoples.max_mana * 0.76):
+                            peoples.mana -= (peoples.max_mana * 0.75)
+                            peoples.lightning_strike()
 
         pygame.display.flip()
         clock.tick(MAX_FPS)

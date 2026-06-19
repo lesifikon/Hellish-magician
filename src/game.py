@@ -3,6 +3,7 @@ import os
 import math
 import random
 import bisect
+import copy
 from main import *
 from assets.images.img import *
 GRAVITY = 0.5
@@ -161,6 +162,15 @@ class Player(PhysicsObjects):
         self.purple_square_rect = pygame.Rect(0, 0, 8, 8)
         self.mouse_rect = pygame.Rect(0, 0, 8, 8)
         self.hand_rect = False
+        self.is_dash = False
+        self.left = False
+        self.right = False
+        self.up = False
+        self.down = False
+        self.mana_use = False
+        self.mana = 500
+        self.max_mana = 500
+        self.abilities_use = False
 
     def scroll(self):
 
@@ -170,21 +180,36 @@ class Player(PhysicsObjects):
         playerCenter_x = self.rect.x + (self.width / 2)
         playerCenter_y = self.rect.y + (self.height / 2)
 
-        if playerCenter_x > 1220:
-            scroll_x -= round((playerCenter_x - 1220) / 15)
-        if playerCenter_x < 500:
-            scroll_x += round((500 - playerCenter_x) / 15)
-        if playerCenter_y > 780:
-            scroll_y += round((780 - playerCenter_y) / 10)
-        if playerCenter_y < 300:
-            scroll_y += round((300 - playerCenter_y) / 10)
+        if playerCenter_x > 1020:
+            scroll_x -= round((playerCenter_x - 1020) / 15)
+        if playerCenter_x < 900:
+            scroll_x += round((900 - playerCenter_x) / 15)
+        if playerCenter_y > 730:
+            scroll_y += round((730 - playerCenter_y) / 5)
+        if playerCenter_y < 350:
+            scroll_y += round((350 - playerCenter_y) / 5)
 
         self.rect.x += scroll_x
         self.rect.y += scroll_y
 
         return scroll_x, scroll_y
 
+    def mana_bar(self):
+        if not self.mana_use:
+            if self.mana < self.max_mana:
+                self.mana += 0.5
+        if self.mana < 1:
+            self.mana = 1
+            self.abilities_use = False
+        else:
+            self.abilities_use = True
+        ratio = self.mana / self.max_mana
+        pygame.draw.rect(screen, (0, 0, 0), (48, 48, 325, 25))
+        pygame.draw.rect(screen, (51, 153, 255), (50, 50, 321, 21))
+        pygame.draw.rect(screen, (51, 51, 255), (50, 50, (321) * ratio, 21))
+
     def hand(self):
+        self.hand_x, self.hand_y = self.rect.x + (self.width / 2), self.rect.y
         self.mouse_x, self.mouse_y = pygame.mouse.get_pos()
         self.rel_x, self.rel_y = self.mouse_x - self.hand_x, self.mouse_y - self.rect.y
         angle = (180 / math.pi) * -math.atan2(self.rel_y, self.rel_x)
@@ -208,7 +233,6 @@ class Player(PhysicsObjects):
         pass
 
     def lightning_strike(self):
-
         def findDistance(x_0, x_1, y_0, y_1):
             legx = abs(x_0 - x_1)
             legy = abs(y_0 - y_1)
@@ -230,8 +254,6 @@ class Player(PhysicsObjects):
                 screen.blit(lig, lig_rect)
                 pygame.draw.rect(screen, (0, 0, 255), square)
             return square.center
-
-        self.hand_x, self.hand_y = self.rect.x + (self.width / 2), self.rect.y
 
         hypotenuse = findDistance(self.mouse_x, self.hand_x, self.mouse_y, self.hand_y)
         n_j_lightning = round(hypotenuse / 16) + 1
@@ -281,9 +303,33 @@ class Player(PhysicsObjects):
 
         squa.center = drawLightning(n_lightning, squa, rel_x, rel_y)
 
- 
-    def dash(self):
-        pass
+    def dash(self, moving_left, moving_right, moving_up, moving_down):
+        self.mana_use = True
+        self.mana -= 3
+
+        self.vel_y = 0
+        self.health = self.health
+        self.update_action(1)
+        if not self.is_dash:
+            self.is_dash = True
+            self.left = moving_left
+            self.right = moving_right
+            self.up = moving_up
+            self.down = moving_down
+        else:
+            sd = moving_left
+            sdd = moving_right
+            sddd = moving_up
+            fff = moving_down
+
+        if self.left:
+            self.rect.x -= 20
+        if self.right:
+            self.rect.x += 20
+        if self.up:
+            self.rect.y -= 20
+        if self.down:
+            self.rect.y += 20
 
     def draw(self):
             screen.blit(pygame.transform.flip(self.image, self.flip, False), self.rect)
@@ -293,7 +339,7 @@ class Shadow(PhysicsObjects):
     def __init__(self, type_img, x, y, scale, speed, health, obstacle_list):
         super().__init__(type_img, x, y, scale, speed, health, obstacle_list)
 
-    def intelligence(self, scroll_x):
+    def intelligence(self, scroll_x, square_y):
         n = random.randint(1,50)
         if n <= 5:
             self.move(moving_left = False, moving_right = True)
@@ -301,6 +347,7 @@ class Shadow(PhysicsObjects):
             self.move(moving_left = True, moving_right = False)
 
         self.rect.x += scroll_x
+        self.rect.y += square_y
 
 
 class Button():
