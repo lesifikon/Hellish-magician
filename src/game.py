@@ -30,7 +30,10 @@ class PhysicsObjects(pygame.sprite.Sprite):
         # self.scroll_x = 0
         # self.scroll_y = 0
 
-        animation_types = ['Idle', 'Run', 'Jump', 'Death']
+        if self.type_img == 'player':
+            animation_types = ['Idle', 'Run', 'Jump', 'Death', 'Dash']
+        else:
+            animation_types = ['Idle', 'Run', 'Jump', 'Death']
         for animation in animation_types:
             # сбросите временный список изображений
             temp_list = []
@@ -61,9 +64,11 @@ class PhysicsObjects(pygame.sprite.Sprite):
 
         if moving_left:
             dx = -self.speed
+            self.flip = True
             self.direction = -1
         if moving_right:
             dx = self.speed
+            self.flip = False
             self.direction = 1
 
         # Jump
@@ -309,7 +314,8 @@ class Player(PhysicsObjects):
 
         self.vel_y = 0
         self.health = self.health
-        self.update_action(1)
+        self.speed = 20
+        self.update_action(4)
         if not self.is_dash:
             self.is_dash = True
             self.left = moving_left

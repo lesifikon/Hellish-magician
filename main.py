@@ -109,13 +109,25 @@ def game():
         world.draw(scroll_x, scroll_y)
 
         text('game', font, (255, 255, 255), screen, 20, 20)
-
-        if not dash:
-            peoples.move(moving_left, moving_right)
+        #
+        # if not dash:
+        #     peoples.move(moving_left, moving_right)
         scroll_x, scroll_y = peoples.scroll()
         peoples.update()
         peoples.draw()
         peoples.mana_bar()
+
+        if peoples.alive:
+            if peoples.in_air:
+                peoples.update_action(2)  # 2: Jump
+            elif moving_left or moving_right:
+                peoples.update_action(1)  # 1: Run
+            else:
+                peoples.update_action(0)
+            if not dash:
+                peoples.move(moving_left, moving_right)
+
+
         shadow.update()
         shadow.draw()
         shadow.intelligence(scroll_x, scroll_y)
@@ -126,6 +138,7 @@ def game():
         if dash:
             peoples.dash(moving_left, moving_right, moving_up, moving_down)
         else:
+            peoples.speed = 5
             peoples.is_dash = False
             peoples.mana_use = False
             if hand_use:
