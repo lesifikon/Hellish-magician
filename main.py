@@ -96,53 +96,66 @@ def game():
                 world_data[x][y] = int(tile)
 
     world = World()
-    peoples, shadow = world.process_data(world_data, img_list, TILE_SIZE)
+    peoples = world.process_data(world_data, img_list, TILE_SIZE)
 
 
     scroll_x = 0
     scroll_y = 0
 
+    lig = False
+    x = 0
     while True:
+
+
+        
 
         screen.fill((200, 25, 25))
 
         world.draw(scroll_x, scroll_y)
 
         text('game', font, (255, 255, 255), screen, 20, 20)
-        #
-        # if not dash:
-        #     peoples.move(moving_left, moving_right)
+
         scroll_x, scroll_y = peoples.scroll()
         peoples.update()
         peoples.draw()
         peoples.mana_bar()
 
         if peoples.alive:
-            if peoples.in_air:
-                peoples.update_action(2)  # 2: Jump
-            elif moving_left or moving_right:
-                peoples.update_action(1)  # 1: Run
+            if not peoples.abilities_use:
+                dash = False
+            if dash:
+                peoples.dash(moving_left, moving_right, moving_up, moving_down)
+                peoples.update_action(4)
             else:
-                peoples.update_action(0)
-            if not dash:
+                peoples.speed = 5
+                peoples.is_dash = False
+                peoples.mana_use = False
+                if hand_use:
+                    peoples.hand()
                 peoples.move(moving_left, moving_right)
+                if peoples.in_air:
+                    peoples.update_action(2)  # 2: Jump
+                elif moving_left or moving_right:
+                    peoples.update_action(1)  # 1: Run
+                else:
+                    peoples.update_action(0)
 
 
-        shadow.update()
-        shadow.draw()
-        shadow.intelligence(scroll_x, scroll_y)
-
-        if not peoples.abilities_use:
-            dash = False
-            peoples.update_action(0)
-        if dash:
-            peoples.dash(moving_left, moving_right, moving_up, moving_down)
+        if lig and x <= 10:
+            if x % 8 ==0:
+                peoples.lightning_strike()
+            x += 1
         else:
-            peoples.speed = 5
-            peoples.is_dash = False
-            peoples.mana_use = False
-            if hand_use:
-                peoples.hand()
+            lig = False
+            x = 0 
+
+        enemy_group = world.update_group()
+
+        for enemy in enemy_group:
+            enemy.intelligence(scroll_x, scroll_y)
+        enemy_group.update()
+        enemy_group.draw(screen)
+
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -192,7 +205,8 @@ def game():
                     if hand_use and dash == False:
                         if peoples.mana > (peoples.max_mana * 0.76):
                             peoples.mana -= (peoples.max_mana * 0.75)
-                            peoples.lightning_strike()
+                            lig = True
+                            # peoples.lightning_strike()
 
         pygame.display.flip()
         clock.tick(MAX_FPS)

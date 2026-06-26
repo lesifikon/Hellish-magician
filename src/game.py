@@ -10,7 +10,7 @@ GRAVITY = 0.5
 
 class PhysicsObjects(pygame.sprite.Sprite):
     def __init__(self, type_img, x, y, scale, speed, health, obstacle_list):
-        # super().__init__()
+        super().__init__()
         self.obstacle_list = obstacle_list
         self.alive = True
         self.type_img = type_img
@@ -26,9 +26,6 @@ class PhysicsObjects(pygame.sprite.Sprite):
         self.frame_index = 0
         self.action = 0
         self.update_time = pygame.time.get_ticks()
-
-        # self.scroll_x = 0
-        # self.scroll_y = 0
 
         if self.type_img == 'player':
             animation_types = ['Idle', 'Run', 'Jump', 'Death', 'Dash']
@@ -161,7 +158,9 @@ class Player(PhysicsObjects):
         self.angle_rad = 0
         self.hand_x, self.hand_y = self.rect.x + (self.width / 2), self.rect.y
         self.hand_img = mini_hamd_player_img.convert_alpha()
-        self.lightning_img = mini_lightning.convert_alpha()
+        self.lightning0_img = mini_lightning0.convert_alpha()
+        self.lightning1_img = mini_lightning1.convert_alpha()
+        self.lightning2_img = mini_lightning2.convert_alpha()
         self.purple_square = pygame.Surface((8, 8),pygame.SRCALPHA)
         self.purple_square.fill((128, 0, 128))
         self.purple_square_rect = pygame.Rect(0, 0, 8, 8)
@@ -202,7 +201,7 @@ class Player(PhysicsObjects):
     def mana_bar(self):
         if not self.mana_use:
             if self.mana < self.max_mana:
-                self.mana += 0.5
+                self.mana += 10.5
         if self.mana < 1:
             self.mana = 1
             self.abilities_use = False
@@ -249,27 +248,38 @@ class Player(PhysicsObjects):
             angle_radd = math.atan2(-rel_y, rel_x)
             for i in range(list):
                 square = pygame.Rect(0, 0, 6, 6)
-                square_x = object.centerx + (i * 16) * math.cos(angle_radd)
-                square_y = object.centery - (i * 16) * math.sin(angle_radd)
+                square_x = object.centerx + (i * 32) * math.cos(angle_radd)
+                square_y = object.centery - (i * 32) * math.sin(angle_radd)
                 square.center = (int(square_x), int(square_y))
+                namber_lightning = random.randint(0, 2)
+                match namber_lightning:
+                    case 0:
+                        lightning = self.lightning0_img
+                    case 1:
+                        lightning = self.lightning1_img
+                    case 2:
+                        lightning = self.lightning2_img
                 angle = (180 / math.pi) * -math.atan2(rel_y, rel_x)
-                lig = pygame.transform.rotate(self.lightning_img, int(angle))
+                lig = pygame.transform.rotate(lightning, int(angle))
                 lig_rect = lig.get_rect(center=(int(square_x), int(square_y)))
 
                 screen.blit(lig, lig_rect)
-                pygame.draw.rect(screen, (0, 0, 255), square)
+                # pygame.draw.rect(screen, (0, 0, 255), square)
             return square.center
 
+        # x = 0
+        # while x <= 5:
+        #     x += 1
         hypotenuse = findDistance(self.mouse_x, self.hand_x, self.mouse_y, self.hand_y)
-        n_j_lightning = round(hypotenuse / 16) + 1
+        n_j_lightning = round(hypotenuse / 32) + 1
         joint = round(n_j_lightning / 10)
 
         list_joint = []
         for j in range(joint):
             realism = random.randint(1, hypotenuse)
             square = pygame.Rect(0, 0, 8, 8)
-            realism_x = random.randint(-50, 50)
-            realism_y = random.randint(-50, 50)
+            realism_x = random.randint(-70, 70)
+            realism_y = random.randint(-70, 70)
             square_x = self.purple_square_rect.centerx + (realism - realism_x) * math.cos(self.angle_rad) + realism_x
             square_y = self.purple_square_rect.centery - (realism + realism_y) * math.sin(self.angle_rad) - realism_y
             square.center = (int(square_x), int(square_y))
@@ -286,11 +296,11 @@ class Player(PhysicsObjects):
             rel_x, rel_y = first_joint[0] - self.purple_square_rect.centerx, first_joint[1] - self.purple_square_rect.centery
 
             difference = findDistance(first_joint[0], self.purple_square_rect.centerx, first_joint[1], self.purple_square_rect.centery)
-            n_lightning = round(difference / 16) + 1
+            n_lightning = round(difference / 32) + 1
         else:
             rel_x, rel_y = self.mouse_x- self.purple_square_rect.centerx, self.mouse_y - self.purple_square_rect.centery
             difference = findDistance(self.mouse_x, self.purple_square_rect.centerx, self.mouse_y, self.purple_square_rect.centery)
-            n_lightning = round(difference / 16) + 1
+            n_lightning = round(difference / 32) + 1
 
         squa = pygame.Rect(0, 0, 6, 6)
         squa.center = drawLightning(n_lightning, self.purple_square_rect, rel_x, rel_y)
@@ -299,12 +309,12 @@ class Player(PhysicsObjects):
             for l in (list_joint):
                 rel_x, rel_y = l[0] - squa.centerx, l[1] - squa.centery
                 difference = findDistance(l[0], squa.centerx, l[1], squa.centery)
-                n_lightning = round(difference / 16) + 1
+                n_lightning = round(difference / 32) + 1
                 squa.center = drawLightning(n_lightning, squa, rel_x, rel_y)
 
         rel_x, rel_y = self.mouse_x - squa.centerx, self.mouse_y - squa.centery
         difference = findDistance(self.mouse_x, squa.centerx, self.mouse_y, squa.centery)
-        n_lightning = round(difference / 16) + 1
+        n_lightning = round(difference / 32) + 1
 
         squa.center = drawLightning(n_lightning, squa, rel_x, rel_y)
 
@@ -315,7 +325,9 @@ class Player(PhysicsObjects):
         self.vel_y = 0
         self.health = self.health
         self.speed = 20
-        self.update_action(4)
+        # self.update_action(4)
+        # self.frame_index += 1
+        # print(self.frame_index)
         if not self.is_dash:
             self.is_dash = True
             self.left = moving_left
@@ -388,10 +400,11 @@ class Button():
 
 class World():
     def __init__(self):
+        super().__init__()
         self.obstacle_list = []
+        self.enemy_group = pygame.sprite.Group()
 
     def process_data(self, data, img_list, TILE_SIZE):
-        self.level_length = len(data[0])
         # пройти по каждому значению по файлу данный уровня
         for y, row in enumerate(data):
             for x, tile in enumerate(row):
@@ -407,12 +420,16 @@ class World():
                         peoples = Player('player', x * TILE_SIZE, y * TILE_SIZE, 3, 5, 100, self.obstacle_list)
                     if tile == 16:
                         shadow = Shadow('shadow', x * TILE_SIZE, y * TILE_SIZE, 3, 2, 1, self.obstacle_list)
+                        self.enemy_group.add(shadow)
 
-        return peoples, shadow
+        return peoples
 
     def draw(self, scroll_x, scroll_y):
         for tile in self.obstacle_list:
             tile[1][0] += scroll_x
             tile[1][1] += scroll_y
             screen.blit(tile[0], tile[1])
+
+    def update_group(self):
+        return self.enemy_group
 
