@@ -26,6 +26,7 @@ class PhysicsObjects(pygame.sprite.Sprite):
         self.frame_index = 0
         self.action = 0
         self.update_time = pygame.time.get_ticks()
+        self.scroll_x, self.scroll_y = 0, 0
 
         if self.type_img == 'player':
             animation_types = ['Idle', 'Run', 'Jump', 'Death', 'Dash']
@@ -177,26 +178,24 @@ class Player(PhysicsObjects):
         self.abilities_use = False
 
     def scroll(self):
-
-        scroll_x = 0
-        scroll_y = 0
+        self.scroll_x, self.scroll_y = 0, 0
 
         playerCenter_x = self.rect.x + (self.width / 2)
         playerCenter_y = self.rect.y + (self.height / 2)
 
         if playerCenter_x > 1020:
-            scroll_x -= round((playerCenter_x - 1020) / 15)
+            self.scroll_x += round((1020 - playerCenter_x) / 15)
         if playerCenter_x < 900:
-            scroll_x += round((900 - playerCenter_x) / 15)
+            self.scroll_x += round((900 - playerCenter_x) / 15)
         if playerCenter_y > 730:
-            scroll_y += round((730 - playerCenter_y) / 5)
+            self.scroll_y += round((730 - playerCenter_y) / 5)
         if playerCenter_y < 350:
-            scroll_y += round((350 - playerCenter_y) / 5)
+            self.scroll_y += round((350 - playerCenter_y) / 5)
 
-        self.rect.x += scroll_x
-        self.rect.y += scroll_y
+        self.rect.x += self.scroll_x
+        self.rect.y += self.scroll_y
 
-        return scroll_x, scroll_y
+        return self.scroll_x, self.scroll_y
 
     def mana_bar(self):
         if not self.mana_use:
@@ -267,9 +266,6 @@ class Player(PhysicsObjects):
                 # pygame.draw.rect(screen, (0, 0, 255), square)
             return square.center
 
-        # x = 0
-        # while x <= 5:
-        #     x += 1
         hypotenuse = findDistance(self.mouse_x, self.hand_x, self.mouse_y, self.hand_y)
         n_j_lightning = round(hypotenuse / 32) + 1
         joint = round(n_j_lightning / 10)
@@ -287,34 +283,32 @@ class Player(PhysicsObjects):
             # pygame.draw.rect(screen, (0, 255, 0), square)
 
 
+        def data_update(meaningX, meaning1X, meaningY, meaning1Y):
+            rel_x, rel_y = meaningX - meaning1X.centerx, meaningY - meaning1Y.centery
+            difference = findDistance(meaningX, meaning1X.centerx, meaningY, meaning1Y.centery)
+            n_lightning = round(difference / 32) + 1
+
+            return rel_x, rel_y, difference, n_lightning
+
         if self.mouse_x < self.hand_x:
             list_joint.reverse()
 
-
         if list_joint:
             first_joint = list_joint[0]
-            rel_x, rel_y = first_joint[0] - self.purple_square_rect.centerx, first_joint[1] - self.purple_square_rect.centery
-
-            difference = findDistance(first_joint[0], self.purple_square_rect.centerx, first_joint[1], self.purple_square_rect.centery)
-            n_lightning = round(difference / 32) + 1
+            rel_x, rel_y, difference, n_lightning = data_update(first_joint[0], self.purple_square_rect, first_joint[1], self.purple_square_rect)
         else:
-            rel_x, rel_y = self.mouse_x- self.purple_square_rect.centerx, self.mouse_y - self.purple_square_rect.centery
-            difference = findDistance(self.mouse_x, self.purple_square_rect.centerx, self.mouse_y, self.purple_square_rect.centery)
-            n_lightning = round(difference / 32) + 1
+            rel_x, rel_y, difference, n_lightning = data_update(self.mouse_x, self.purple_square_rect, self.mouse_y, self.purple_square_rect)
 
         squa = pygame.Rect(0, 0, 6, 6)
         squa.center = drawLightning(n_lightning, self.purple_square_rect, rel_x, rel_y)
 
         if list_joint:
             for l in (list_joint):
-                rel_x, rel_y = l[0] - squa.centerx, l[1] - squa.centery
-                difference = findDistance(l[0], squa.centerx, l[1], squa.centery)
-                n_lightning = round(difference / 32) + 1
+                rel_x, rel_y, difference, n_lightning = data_update(l[0], squa, l[1], squa)
+
                 squa.center = drawLightning(n_lightning, squa, rel_x, rel_y)
 
-        rel_x, rel_y = self.mouse_x - squa.centerx, self.mouse_y - squa.centery
-        difference = findDistance(self.mouse_x, squa.centerx, self.mouse_y, squa.centery)
-        n_lightning = round(difference / 32) + 1
+        rel_x, rel_y, difference, n_lightning = data_update(self.mouse_x, squa, self.mouse_y, squa)
 
         squa.center = drawLightning(n_lightning, squa, rel_x, rel_y)
 
@@ -325,9 +319,6 @@ class Player(PhysicsObjects):
         self.vel_y = 0
         self.health = self.health
         self.speed = 20
-        # self.update_action(4)
-        # self.frame_index += 1
-        # print(self.frame_index)
         if not self.is_dash:
             self.is_dash = True
             self.left = moving_left
@@ -335,10 +326,7 @@ class Player(PhysicsObjects):
             self.up = moving_up
             self.down = moving_down
         else:
-            sd = moving_left
-            sdd = moving_right
-            sddd = moving_up
-            fff = moving_down
+            sd, sdd, sddd, fff = moving_left, moving_right, moving_up, moving_down #заглушка
 
         if self.left:
             self.rect.x -= 20
@@ -357,15 +345,15 @@ class Shadow(PhysicsObjects):
     def __init__(self, type_img, x, y, scale, speed, health, obstacle_list):
         super().__init__(type_img, x, y, scale, speed, health, obstacle_list)
 
-    def intelligence(self, scroll_x, square_y):
+    def intelligence(self):
         n = random.randint(1,50)
         if n <= 5:
             self.move(moving_left = False, moving_right = True)
         else:
             self.move(moving_left = True, moving_right = False)
 
-        self.rect.x += scroll_x
-        self.rect.y += square_y
+        self.rect.x += self.scroll_x
+        self.rect.y += self.scroll_y
 
 
 class Button():

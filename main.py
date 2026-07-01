@@ -19,7 +19,6 @@ MAX_FPS = 60
 
 font = pygame.font.SysFont(None, 20)
 
-# найти им место
 def text(text, font, color, surface, x, y):
     textobj = font.render(text, 1, color)
     textrect = textobj.get_rect()
@@ -77,6 +76,10 @@ def game():
     moving_down = False
     hand_use = False
     dash = False
+    ligthning = False
+    ligthning_time = 0
+    scroll_x = 0
+    scroll_y = 0
 
     img_list = []
     for x in range(TILE_TYPES):
@@ -98,27 +101,13 @@ def game():
     world = World()
     peoples = world.process_data(world_data, img_list, TILE_SIZE)
 
-
-    scroll_x = 0
-    scroll_y = 0
-
-    lig = False
-    x = 0
     while True:
-
-
-        
 
         screen.fill((200, 25, 25))
 
         world.draw(scroll_x, scroll_y)
 
         text('game', font, (255, 255, 255), screen, 20, 20)
-
-        scroll_x, scroll_y = peoples.scroll()
-        peoples.update()
-        peoples.draw()
-        peoples.mana_bar()
 
         if peoples.alive:
             if not peoples.abilities_use:
@@ -130,6 +119,13 @@ def game():
                 peoples.speed = 5
                 peoples.is_dash = False
                 peoples.mana_use = False
+                if ligthning and ligthning_time <= 10:
+                    if ligthning_time % 8 ==0:
+                        peoples.lightning_strike()
+                    ligthning_time += 1
+                else:
+                    ligthning = False
+                    ligthning_time = 0
                 if hand_use:
                     peoples.hand()
                 peoples.move(moving_left, moving_right)
@@ -140,19 +136,15 @@ def game():
                 else:
                     peoples.update_action(0)
 
-
-        if lig and x <= 10:
-            if x % 8 ==0:
-                peoples.lightning_strike()
-            x += 1
-        else:
-            lig = False
-            x = 0 
+        scroll_x, scroll_y = peoples.scroll()
+        peoples.update()
+        peoples.draw()
+        peoples.mana_bar()
 
         enemy_group = world.update_group()
 
         for enemy in enemy_group:
-            enemy.intelligence(scroll_x, scroll_y)
+            enemy.intelligence()
         enemy_group.update()
         enemy_group.draw(screen)
 
@@ -205,8 +197,7 @@ def game():
                     if hand_use and dash == False:
                         if peoples.mana > (peoples.max_mana * 0.76):
                             peoples.mana -= (peoples.max_mana * 0.75)
-                            lig = True
-                            # peoples.lightning_strike()
+                            ligthning = True
 
         pygame.display.flip()
         clock.tick(MAX_FPS)
