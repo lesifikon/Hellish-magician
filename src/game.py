@@ -26,10 +26,9 @@ class PhysicsObjects(pygame.sprite.Sprite):
         self.frame_index = 0
         self.action = 0
         self.update_time = pygame.time.get_ticks()
-        self.scroll_x, self.scroll_y = 0, 0
 
         if self.type_img == 'player':
-            animation_types = ['Idle', 'Run', 'Jump', 'Death', 'Dash']
+            animation_types = ['Idle', 'Run', 'Jump', 'Death', 'Dash', 'Run1']
         else:
             animation_types = ['Idle', 'Run', 'Jump', 'Death']
         for animation in animation_types:
@@ -178,46 +177,59 @@ class Player(PhysicsObjects):
         self.abilities_use = False
 
     def scroll(self):
-        self.scroll_x, self.scroll_y = 0, 0
+        scroll_x, scroll_y = 0, 0
 
         playerCenter_x = self.rect.x + (self.width / 2)
         playerCenter_y = self.rect.y + (self.height / 2)
 
         if playerCenter_x > 1020:
-            self.scroll_x += round((1020 - playerCenter_x) / 15)
+            scroll_x += round((1020 - playerCenter_x) / 15)
         if playerCenter_x < 900:
-            self.scroll_x += round((900 - playerCenter_x) / 15)
+            scroll_x += round((900 - playerCenter_x) / 15)
         if playerCenter_y > 730:
-            self.scroll_y += round((730 - playerCenter_y) / 5)
+            scroll_y += round((730 - playerCenter_y) / 5)
         if playerCenter_y < 350:
-            self.scroll_y += round((350 - playerCenter_y) / 5)
+            scroll_y += round((350 - playerCenter_y) / 5)
 
-        self.rect.x += self.scroll_x
-        self.rect.y += self.scroll_y
+        self.rect.x += scroll_x
+        self.rect.y += scroll_y
 
-        return self.scroll_x, self.scroll_y
+        return scroll_x, scroll_y
 
-    def mana_bar(self):
-        if not self.mana_use:
-            if self.mana < self.max_mana:
-                self.mana += 10.5
-        if self.mana < 1:
-            self.mana = 1
-            self.abilities_use = False
+    def bar(self, resources):
+        if resources == 'mana':
+            x, y = 48, 60
+            x1, y1, = 50, 62
+            rgb, rgb1 = (51, 153, 255), (51, 51, 255)
+            if not self.mana_use:
+                if self.mana < self.max_mana:
+                    self.mana += 10.5
+            if self.mana < 1:
+                self.mana = 1
+                self.abilities_use = False
+            else:
+                self.abilities_use = True
+            ratio = self.mana / self.max_mana
         else:
-            self.abilities_use = True
-        ratio = self.mana / self.max_mana
-        pygame.draw.rect(screen, (0, 0, 0), (48, 48, 325, 25))
-        pygame.draw.rect(screen, (51, 153, 255), (50, 50, 321, 21))
-        pygame.draw.rect(screen, (51, 51, 255), (50, 50, (321) * ratio, 21))
+            x, y = 48, 32
+            x1, y1 = 50, 34
+            rgb, rgb1 = (255, 7, 5), (200, 7, 5)
+            if self.health != 0:
+                if self.health < self.max_health:
+                    self.health += 0.005
+            ratio = self.health / self.max_health
+        pygame.draw.rect(screen, (0, 0, 0), (x, y, 325, 25))
+        pygame.draw.rect(screen, rgb, (x1, y1, 321, 21))
+        pygame.draw.rect(screen, rgb1, (x1, y1, (321) * ratio, 21))
 
     def hand(self):
-        self.hand_x, self.hand_y = self.rect.x + (self.width / 2), self.rect.y
+        self.hand_x, self.hand_y = ((self.rect.x + self.width / 2) + 17 * self.direction , self.rect.y + 45)
         self.mouse_x, self.mouse_y = pygame.mouse.get_pos()
         self.rel_x, self.rel_y = self.mouse_x - self.hand_x, self.mouse_y - self.rect.y
         angle = (180 / math.pi) * -math.atan2(self.rel_y, self.rel_x)
-        h_hand = pygame.transform.rotate(self.hand_img, int(angle))
-        self.hand_rect = h_hand.get_rect(center=(self.rect.x + (self.width / 2), self.rect.y))
+        h_hand = pygame.transform.scale(self.hand_img, (self.hand_img.get_width() * 3, self.hand_img.get_height() * 3))
+        h_hand = pygame.transform.rotate(h_hand, int(angle))
+        self.hand_rect = h_hand.get_rect(center=(self.hand_x, self.hand_y))
 
         self.angle_rad = math.atan2(-self.rel_y, self.rel_x)
 
@@ -317,7 +329,6 @@ class Player(PhysicsObjects):
         self.mana -= 3
 
         self.vel_y = 0
-        self.health = self.health
         self.speed = 20
         if not self.is_dash:
             self.is_dash = True
@@ -329,13 +340,13 @@ class Player(PhysicsObjects):
             sd, sdd, sddd, fff = moving_left, moving_right, moving_up, moving_down #заглушка
 
         if self.left:
-            self.rect.x -= 20
+            self.rect.x -= 15
         if self.right:
-            self.rect.x += 20
+            self.rect.x += 15
         if self.up:
-            self.rect.y -= 20
+            self.rect.y -= 15
         if self.down:
-            self.rect.y += 20
+            self.rect.y += 15
 
     def draw(self):
             screen.blit(pygame.transform.flip(self.image, self.flip, False), self.rect)
@@ -344,16 +355,45 @@ class Player(PhysicsObjects):
 class Shadow(PhysicsObjects):
     def __init__(self, type_img, x, y, scale, speed, health, obstacle_list):
         super().__init__(type_img, x, y, scale, speed, health, obstacle_list)
+        self.player_left = False
+        self.player_right = False
+        self.player_up = False
+        self.player_down = False
 
-    def intelligence(self):
-        n = random.randint(1,50)
-        if n <= 5:
-            self.move(moving_left = False, moving_right = True)
+    def intelligence(self, player, scroll_x, scroll_y):
+        if self.rect.x > player.rect.centerx:
+            self.player_right = True
+            self.player_left = False
         else:
-            self.move(moving_left = True, moving_right = False)
+            self.player_left = True
+            self.player_right = False
+        if self.rect.centery < player.rect.centery:
+            self.player_down = True
+            self.player_up = False
+        else:
+            self.player_up = True
+            self.player_down = False
+        dx = 0
+        dy = 0
 
-        self.rect.x += self.scroll_x
-        self.rect.y += self.scroll_y
+        if self.player_left:
+            dx = self.speed
+            self.flip = True
+            self.direction = -1
+        if self.player_right:
+            dx = -self.speed
+            self.flip = False
+            self.direction = 1
+        if self.player_up:
+            dy = -self.speed
+        if self.player_down:
+            dy = self.speed
+
+        self.rect.x += dx
+        self.rect.y += dy
+
+        self.rect.x += scroll_x
+        self.rect.y += scroll_y
 
 
 class Button():
@@ -407,7 +447,7 @@ class World():
                     if tile == 15:
                         peoples = Player('player', x * TILE_SIZE, y * TILE_SIZE, 3, 5, 100, self.obstacle_list)
                     if tile == 16:
-                        shadow = Shadow('shadow', x * TILE_SIZE, y * TILE_SIZE, 3, 2, 1, self.obstacle_list)
+                        shadow = Shadow('shadow', x * TILE_SIZE, y * TILE_SIZE, 3, 4, 1, self.obstacle_list)
                         self.enemy_group.add(shadow)
 
         return peoples
